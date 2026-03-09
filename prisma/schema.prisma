@@ -1,0 +1,117 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Listing {
+  id               String   @id @default(cuid())
+  source           String
+  sourceUrl        String?  @map("source_url")
+  title            String
+  propertyType     String   @map("property_type")
+  transactionType  String   @default("sale") @map("transaction_type")
+  askingPrice      Int      @map("asking_price")
+  municipality     String
+  postalCode       String   @map("postal_code")
+  province         String
+  latitude         Float?
+  longitude        Float?
+  bedrooms         Int?
+  bathrooms        Int?
+  livingAreaM2     Int?     @map("living_area_m2")
+  landAreaM2       Int?     @map("land_area_m2")
+  epcScore         Int?     @map("epc_score")
+  energyLabel      String?  @map("energy_label")
+  condition        String?
+  constructionYear Int?     @map("construction_year")
+  floor            Int?
+  hasTerrace       Boolean  @default(false) @map("has_terrace")
+  hasGarden        Boolean  @default(false) @map("has_garden")
+  hasParking       Boolean  @default(false) @map("has_parking")
+  hasElevator      Boolean  @default(false) @map("has_elevator")
+  description      String?
+  photoUrls        String[] @map("photo_urls")
+  isActive         Boolean  @default(true) @map("is_active")
+  isApproved       Boolean  @default(true) @map("is_approved")
+  createdAt        DateTime @default(now()) @map("created_at")
+  firstSeenAt      DateTime @default(now()) @map("first_seen_at")
+  lastSeenAt       DateTime @default(now()) @map("last_seen_at")
+
+  rounds      GameRound[]
+  comparables Comparable[] @relation("ListingComparables")
+  asComp      Comparable[] @relation("CompListing")
+
+  @@map("listings")
+}
+
+model Comparable {
+  id              String  @id @default(cuid())
+  listingId       String  @map("listing_id")
+  compListingId   String  @map("comp_listing_id")
+  distanceKm      Float?  @map("distance_km")
+  price           Int
+  pricePerM2      Int?    @map("price_per_m2")
+  similarityScore Float?  @map("similarity_score")
+
+  listing     Listing @relation("ListingComparables", fields: [listingId], references: [id])
+  compListing Listing @relation("CompListing", fields: [compListingId], references: [id])
+
+  @@map("comparables")
+}
+
+model GameSession {
+  id         String    @id @default(cuid())
+  userId     String?   @map("user_id")
+  mode       String
+  startedAt  DateTime  @default(now()) @map("started_at")
+  finishedAt DateTime? @map("finished_at")
+  totalScore Int       @default(0) @map("total_score")
+
+  rounds GameRound[]
+
+  @@map("game_sessions")
+}
+
+model GameRound {
+  id          String   @id @default(cuid())
+  sessionId   String   @map("session_id")
+  listingId   String   @map("listing_id")
+  roundNumber Int      @default(1) @map("round_number")
+  guessPrice  Int?     @map("guess_price")
+  actualPrice Int      @map("actual_price")
+  pctError    Float?   @map("pct_error")
+  roundScore  Int?     @map("round_score")
+  answeredAt  DateTime? @map("answered_at")
+
+  session GameSession @relation(fields: [sessionId], references: [id])
+  listing Listing     @relation(fields: [listingId], references: [id])
+
+  @@map("game_rounds")
+}
+
+model DailyChallenge {
+  id         String   @id @default(cuid())
+  date       DateTime @unique @db.Date
+  listingIds String[] @map("listing_ids")
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  @@map("daily_challenges")
+}
+
+model LeaderboardEntry {
+  id        String   @id @default(cuid())
+  userId    String   @map("user_id")
+  username  String
+  mode      String
+  score     Int
+  date      DateTime @db.Date
+  streak    Int      @default(0)
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@index([mode, date, score(sort: Desc)])
+  @@map("leaderboard_entries")
+}
