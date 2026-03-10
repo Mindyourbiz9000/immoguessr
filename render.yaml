@@ -10,7 +10,7 @@ services:
     name: immoguessr
     runtime: node
     buildCommand: npm install && npm run build && npm run db:push
-    startCommand: node .next/standalone/server.js
+    startCommand: npx next start -p $PORT -H 0.0.0.0
     envVars:
       - key: DATABASE_URL
         fromDatabase:
