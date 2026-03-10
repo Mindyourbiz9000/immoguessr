@@ -9,7 +9,7 @@ services:
     plan: free
     name: immoguessr
     runtime: node
-    buildCommand: npm install && npm run build && npm run db:push
+    buildCommand: npm install && npm run build && cp -r .next/static .next/standalone/.next/static && npm run db:push
     startCommand: node .next/standalone/server.js
     envVars:
       - key: DATABASE_URL
